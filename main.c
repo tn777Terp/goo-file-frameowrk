@@ -21,13 +21,38 @@ int main(int argc, char ** argv){
     return ENOENT;
   }
 
-  goo_header_info_t goo_header_info = create_goo_header_info();
-  if(!fread_goo_header_info(&goo_header_info, p_fin)){
-    (void)PRINT_ERR("Failed to read file %s\n\n", argv[1]);
+  goo_t goo; init_goo(&goo);
+  
+
+/*** EXAMPLE of how to read entire file and print out its details***/
+  if(!fread_goo_file(&goo, p_fin) ){
+    (void)PRINT_ERR("Failed to read header info for %s\n\n", argv[1]);
     return EIO;
   }
+  print_goo(&goo, 2); // Prints at most info for 2 layers. This prevents too much text on screen.
+  free_goo(&goo);
 
-  print_goo_header_info(&goo_header_info);
+
+/*** EXAMPLE of how to read Header Info and Layer Content Separately ***/
+  // goo_header_info_t   goo_header_info;
+  // goo_layer_content_t *goo_layer_contents;
+  // // Reading Header Info example
+  // if(!fread_goo_header_info(&goo_header_info, p_fin)){
+  //   (void)PRINT_ERR("Failed to read header info for %s\n\n", argv[1]);
+  //   return EIO;
+  // }
+  // print_goo_header_info(&goo_header_info);  putchar('\n');
+  //
+  // // Reading Layer Content example
+  // if(!fread_goo_layer_content(&goo_layer_contents, &goo_header_info, p_fin)){
+  //   (void)PRINT_ERR("Failed to read content info for %s\n\n", argv[1]);
+  //   return EIO;
+  // }
+  // print_goo_layer_content(&goo_layer_contents[0]); putchar('\n');
+  // print_goo_layer_content(&goo_layer_contents[1]); putchar('\n');
+  //
+  // free_goo_layer_content(goo_layer_contents, goo_header_info.total_layers);
+
 
   fclose(p_fin);
   return 0;
