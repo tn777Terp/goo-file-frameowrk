@@ -5,6 +5,7 @@
 
 #include "commons.h"
 #include "goo.h"
+#include "bmp.h"
 
 
 
@@ -21,16 +22,56 @@ int main(int argc, char ** argv){
     return ENOENT;
   }
 
-  goo_t goo; init_goo(&goo);
-  
+
+  printf("System Endianess: ");
+  if(is_little_endian()){
+    printf("Little Endian\n\n");
+  } else{
+    printf("Big Endian\n\n");
+    (void)PRINT_ERR("Code currently only support Little Endian systems %s\n\n", argv[1]);
+    return ENOEXEC;
+  }
+
+
+/*** EXAMPLE of how to read entire bmp file ***/
+  // bmp_t bmp; init_bmp(&bmp);
+  // if(!fread_bmp_file(&bmp, p_fin) ){
+  //   (void)PRINT_ERR("Failed to read header info for %s\n\n", argv[1]);
+  //   return EIO;
+  // }
+  // print_bmp(&bmp);
+  // free_bmp(&bmp);
+
+
+/*** EXAMPLE of how to read the header and pixel data separately ***/
+  // bmp_header_t bmp_header;
+  // bmp_pixel_t *bmp_pixels;
+  // 
+  // if(!fread_bmp_header(&bmp_header, p_fin) ){
+  //   (void)PRINT_ERR("Failed to read header info for %s\n\n", argv[1]);
+  //   return EIO;
+  // }
+  // print_bmp_header(&bmp_header);
+  //
+  // if(!fread_bmp_pixel(&bmp_pixels, &bmp_header, p_fin)){
+  //   (void)PRINT_ERR("Failed to read pixel info for %s\n\n", argv[1]);
+  //   return EIO;
+  // }
+  // print_bmp_pixel(&bmp_header, bmp_pixels);
+  // 
+  // free_bmp_pixel(bmp_pixels);
+
+
+
 
 /*** EXAMPLE of how to read entire file and print out its details***/
-  if(!fread_goo_file(&goo, p_fin) ){
-    (void)PRINT_ERR("Failed to read header info for %s\n\n", argv[1]);
-    return EIO;
-  }
-  print_goo(&goo, 2); // Prints at most info for 2 layers. This prevents too much text on screen.
-  free_goo(&goo);
+  // goo_t goo; init_goo(&goo);
+  // if(!fread_goo_file(&goo, p_fin) ){
+  //   (void)PRINT_ERR("Failed to read header info for %s\n\n", argv[1]);
+  //   return EIO;
+  // }
+  // print_goo(&goo, 2); // Prints at most info for 2 layers. This prevents too much text on screen.
+  // free_goo(&goo);
 
 
 /*** EXAMPLE of how to read Header Info and Layer Content Separately ***/
@@ -49,7 +90,7 @@ int main(int argc, char ** argv){
   //   return EIO;
   // }
   // print_goo_layer_content(&goo_layer_contents[0]); putchar('\n');
-  // print_goo_layer_content(&goo_layer_contents[1]); putchar('\n');
+  // // print_goo_layer_content(&goo_layer_contents[1]); putchar('\n');
   //
   // free_goo_layer_content(goo_layer_contents, goo_header_info.total_layers);
 

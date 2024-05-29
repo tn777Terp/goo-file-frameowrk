@@ -42,7 +42,7 @@ $(foreach dirname,$(sort $(dir $(sources_c) $(sources_cpp))),\
   $(shell $(MKDIR) $(BIN_DIR)/$(dirname)))
 
 # complie & link variable
-CFLAGS     := $(if $(DEBUG),-g , -O2)
+CFLAGS     := $(if $(DEBUG),-g -O0 , -O2)
 CFLAGS     += $(addprefix -I ,$(sort $(dir $(sources_h))))
 CFLAGS     += -fgnu89-inline
 CXXFLAGS    = $(CFLAGS)

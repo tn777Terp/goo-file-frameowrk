@@ -1,14 +1,22 @@
 #pragma once
 
 #include <stdint.h>
-#include <string.h>
 #include <stdbool.h>
 
+// #######################################################################################
+// Data Structure Summary
+// #######################################################################################
+// goo_t
+// ├─ goo_header_info_t
+// ├─ ...
+// ├─ goo_layer_content_t[*]
+// │  ├─ goo_layer_definition_t
+// │  ├─ ...
+// │  ├─ image_data_chunk_t[*]
+// │  ├─ ...
+//
 
-#define GOO_MAGIC_TAG 0x07000000444C5000          // Indicates the beginning and end of the file
-
-typedef uint8_t byte11_t[11];                     // custom 11-byte data for ending string
-
+// Chunk of image data. See spec sheet PDF for formatting info
 #pragma packed
 typedef struct image_data_chunk_t{
   uint8_t byte0;
@@ -34,9 +42,9 @@ typedef struct goo_header_info_t {
   int16_t  grey_level                       ;  // Grey level
   int16_t  blur_level                       ;  // Blur level
   uint16_t small_preview_image_data[116*116];  // u16[RED 5-bits, GREEN 6-bits, BLUE 5-bits]
-  uint16_t delimiter1                       ;  // fixed value: 0x0D_0A
+  uint16_t delimiter1                       ;  // Fixed value: 0x0D_0A
   uint16_t big_preview_image_data  [290*290];  // u16[RED 5-bits, GREEN 6-bits, BLUE 5-bits]
-  uint16_t delimiter2                       ;  // fixed value: 0x0D_0A
+  uint16_t delimiter2                       ;  // Fixed value: 0x0D_0A
   int32_t  total_layers                     ;  // Total number of layers
   int16_t  x_resolution                     ;  // Resolution of printing LCD in x-direction
   int16_t  y_resolution                     ;  // Resolution of printing LCD in y-direction
@@ -89,24 +97,24 @@ typedef struct goo_header_info_t {
 
 #pragma packed
 typedef struct goo_layer_definition_t {
-  int16_t  pause_flag               ;  // 
-  float    pause_position_z         ;  // 
-  float    layer_position_z         ;  // 
-  float    layer_exposure_time      ;  // 
-  float    layer_off_time           ;  // 
-  float    before_lift_time         ;  // 
-  float    after_lift_time          ;  // 
-  float    after_retract_time       ;  // 
-  float    lift_distance            ;  // 
-  float    lift_speed               ;  // 
-  float    second_lift_distance     ;  // 
-  float    second_lift_speed        ;  // 
-  float    retract_distance         ;  // 
-  float    retract_speed            ;  // 
-  float    second_retract_distance  ;  // 
-  float    second_retract_speed     ;  // 
-  int16_t  light_pwm                ;  // 
-  uint16_t delimiter                ;  // 
+  int16_t  pause_flag               ;  // 0 = Reserved  |  1 = Current layer pause printing
+  float    pause_position_z         ;  // (mm)     Lift distance of z-axis when pause_flag=1
+  float    layer_position_z         ;  // (mm)     Height of current layer
+  float    layer_exposure_time      ;  // (sec)    Exposure time of current layer
+  float    layer_off_time           ;  // (sec)    Off time of current layer when exposure_delay_mode=0
+  float    before_lift_time         ;  // (sec)    Waiting time before lift for current layer.   Enabled when exposure_delay_mode=1
+  float    after_lift_time          ;  // (sec)    Waiting time after lift for current layer.    Enabled when exposure_delay_mode=1
+  float    after_retract_time       ;  // (sec)    Waiting time after retract for current layer. Enabled when exposure_delay_mode=1
+  float    lift_distance            ;  // (mm)     Lift distance for current layer
+  float    lift_speed               ;  // (mm/min) Lift speed for current layer
+  float    second_lift_distance     ;  // (mm)     Lift distance of second stage for current layer
+  float    second_lift_speed        ;  // (mm/min) Lift speed of second stage for current layer
+  float    retract_distance         ;  // (mm)     Retract distance for current layer
+  float    retract_speed            ;  // (mm/min) Retract speed for current layer
+  float    second_retract_distance  ;  // (mm)     Retract distance of second stage for current layer
+  float    second_retract_speed     ;  // (mm/min) Retract speed of second stage for current layer
+  int16_t  light_pwm                ;  // Power of light for current layers (0-255)
+  uint16_t delimiter                ;  // Fixed value: 0x0D_0A
 } goo_layer_definition_t;
 
 #pragma packed
@@ -123,25 +131,5 @@ typedef struct goo_layer_content_t {
 typedef struct goo_t {
   goo_header_info_t    header_info  ;  // File header
   goo_layer_content_t *layer_content;  // Contains layer datas
-  char             ending_string[11];  // Fix constant: 0x00_00_00_07_00_00_00_44_4C_50_00 indicates end of file
+  char             ending_string[11];  // Fix value: 0x00_00_00_07_00_00_00_44_4C_50_00 - indicates end of file
 } goo_t;
-
-
-void init_goo(goo_t *goo);                                              // Initialize all value to 0
-void init_goo_header_info(goo_header_info_t *goo_header_info);          // Initialize all value to 0
-
-void free_goo_layer_content(goo_layer_content_t *content, int nlayers); // 
-void free_goo(goo_t *goo);                                              //
-
-int  fread_goo_header_info(goo_header_info_t *dst, FILE *fp);           // Reads content of fp.goo into dst
-int  fread_goo_layer_definition(goo_layer_definition_t *dst, FILE *fp);    
-int  fread_goo_layer_content(goo_layer_content_t **dst, goo_header_info_t *header, FILE *fp);
-int  fread_goo_file(goo_t *dst, FILE *fp);
-
-void print_img_u16(uint16_t *data, uint16_t width, uint16_t height);    // Prints image given u16 pixel datas
-void print_goo_header_info(goo_header_info_t *header);                  // Prints out all .goo header info
-void print_goo_layer_definition(goo_layer_definition_t *definition);    // Print layer definition
-void print_goo_layer_content(goo_layer_content_t *content);             // Print layer content
-void print_goo(goo_t *goo, int max_layer);                              // Print all .goo info
-
-

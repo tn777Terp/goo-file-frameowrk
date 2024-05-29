@@ -15,9 +15,7 @@
 
 
 bool is_little_endian();
-inline void convert_to_le(void *data, size_t size);  // Converts big endian to little endian
+inline void swap_bytes(void *data, size_t size);  // Converts between Big Endian and Little Endian
 
-// inline void convert_to_le16(void *data);
-// inline void convert_to_le32(void *data);
-
-size_t fread_le(void *buffer, size_t size, size_t count, FILE *stream); // fread() but in little endian
+size_t fread_be2le(void *buffer, size_t size, size_t count, FILE *stream);      // Wrapper to fread() . Reads big endian. Converts to little endian
+size_t fwrite_le2be(const void *ptr, size_t size, size_t nmemb, FILE *stream);  // Wrapper to fwrite(). Convert little endian to big endian before writing

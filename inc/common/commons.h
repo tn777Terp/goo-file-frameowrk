@@ -19,4 +19,3 @@
 #define PRINT_ERR(format, ...) fprintf(stderr, BI_ORANGE "\nDEBUG: %s:%d:%s():\n" NOC format, \
                                   __FILE__, __LINE__, __func__, ##__VA_ARGS__)
 
-

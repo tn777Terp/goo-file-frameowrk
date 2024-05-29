@@ -1,5 +1,5 @@
-#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "goo.h"
 #include "endian.h"
 
@@ -41,92 +41,92 @@ void free_goo(goo_t *goo){
 /// @return    1=sucess | 0=error
 int fread_goo_header_info(goo_header_info_t *dst, FILE *fp) {
   if(fseek(fp, 0, SEEK_SET)) return 0;
-  if(!fread_le( dst->version                        , sizeof(char    ),       4, fp) ) return 0;  // char [ 4]
-  if(!fread_le(&dst->magic_tag                      , sizeof(uint64_t),       1, fp) ) return 0;  // uint64_t
-  if(!fread_le( dst->software_info                  , sizeof(char    ),      32, fp) ) return 0;  // char [32]
-  if(!fread_le( dst->software_version               , sizeof(char    ),      24, fp) ) return 0;  // char [24]
-  if(!fread_le( dst->file_time                      , sizeof(char    ),      24, fp) ) return 0;  // char [24]
-  if(!fread_le( dst->printer_name                   , sizeof(char    ),      32, fp) ) return 0;  // char [32]
-  if(!fread_le( dst->printer_type                   , sizeof(char    ),      32, fp) ) return 0;  // char [32]
-  if(!fread_le( dst->profile_name                   , sizeof(char    ),      32, fp) ) return 0;  // char [32]
-  if(!fread_le(&dst->anti_aliasing_level            , sizeof(int16_t ),       1, fp) ) return 0;  // int16_t        
-  if(!fread_le(&dst->grey_level                     , sizeof(int16_t ),       1, fp) ) return 0;  // int16_t        
-  if(!fread_le(&dst->blur_level                     , sizeof(int16_t ),       1, fp) ) return 0;  // int16_t        
-  if(!fread_le( dst->small_preview_image_data       , sizeof(uint16_t), 116*116, fp) ) return 0;  // uint16_t [116*116]
-  if(!fread_le(&dst->delimiter1                     , sizeof(uint16_t),       1, fp) ) return 0;  // int16_t
-  if(!fread_le( dst->big_preview_image_data         , sizeof(uint16_t), 290*290, fp) ) return 0;  // uint16_t [290*290]
-  if(!fread_le(&dst->delimiter2                     , sizeof(uint16_t),       1, fp) ) return 0;  // int16_t
-  if(!fread_le(&dst->total_layers                   , sizeof(int32_t ),       1, fp) ) return 0;  // int32_t         
-  if(!fread_le(&dst->x_resolution                   , sizeof(int16_t ),       1, fp) ) return 0;  // int16_t         
-  if(!fread_le(&dst->y_resolution                   , sizeof(int16_t ),       1, fp) ) return 0;  // int16_t         
-  if(!fread_le(&dst->x_mirror                       , sizeof(bool    ),       1, fp) ) return 0;  // bool            
-  if(!fread_le(&dst->y_mirror                       , sizeof(bool    ),       1, fp) ) return 0;  // bool            
-  if(!fread_le(&dst->x_size_of_platform             , sizeof(float   ),       1, fp) ) return 0;  // float           
-  if(!fread_le(&dst->y_size_of_platform             , sizeof(float   ),       1, fp) ) return 0;  // float           
-  if(!fread_le(&dst->z_size_of_platform             , sizeof(float   ),       1, fp) ) return 0;  // float           
-  if(!fread_le(&dst->layer_thickness                , sizeof(float   ),       1, fp) ) return 0;  // float           
-  if(!fread_le(&dst->common_exposure_time           , sizeof(float   ),       1, fp) ) return 0;  // float           
-  if(!fread_le(&dst->exposure_delay_mode            , sizeof(bool    ),       1, fp) ) return 0;  // bool            
-  if(!fread_le(&dst->turn_off_time                  , sizeof(float   ),       1, fp) ) return 0;  // float           
-  if(!fread_le(&dst->bottom_before_lift_time        , sizeof(float   ),       1, fp) ) return 0;  // float           
-  if(!fread_le(&dst->bottom_after_lift_time         , sizeof(float   ),       1, fp) ) return 0;  // float           
-  if(!fread_le(&dst->bottom_after_retract_time      , sizeof(float   ),       1, fp) ) return 0;  // float           
-  if(!fread_le(&dst->before_lift_time               , sizeof(float   ),       1, fp) ) return 0;  // float           
-  if(!fread_le(&dst->after_lift_time                , sizeof(float   ),       1, fp) ) return 0;  // float           
-  if(!fread_le(&dst->after_retract_time             , sizeof(float   ),       1, fp) ) return 0;  // float           
-  if(!fread_le(&dst->bottom_exposure_time           , sizeof(float   ),       1, fp) ) return 0;  // float           
-  if(!fread_le(&dst->bottom_layers                  , sizeof(float   ),       1, fp) ) return 0;  // float           
-  if(!fread_le(&dst->bottom_lift_distance           , sizeof(float   ),       1, fp) ) return 0;  // float           
-  if(!fread_le(&dst->bottom_lift_speed              , sizeof(float   ),       1, fp) ) return 0;  // float           
-  if(!fread_le(&dst->lift_distance                  , sizeof(float   ),       1, fp) ) return 0;  // float           
-  if(!fread_le(&dst->lift_speed                     , sizeof(float   ),       1, fp) ) return 0;  // float           
-  if(!fread_le(&dst->bottom_retract_distance        , sizeof(float   ),       1, fp) ) return 0;  // float           
-  if(!fread_le(&dst->bottom_retract_speed           , sizeof(float   ),       1, fp) ) return 0;  // float           
-  if(!fread_le(&dst->retract_distance               , sizeof(float   ),       1, fp) ) return 0;  // float           
-  if(!fread_le(&dst->retract_speed                  , sizeof(float   ),       1, fp) ) return 0;  // float           
-  if(!fread_le(&dst->bottom_second_lift_distance    , sizeof(float   ),       1, fp) ) return 0;  // float           
-  if(!fread_le(&dst->bottom_second_lift_speed       , sizeof(float   ),       1, fp) ) return 0;  // float           
-  if(!fread_le(&dst->second_lift_distance           , sizeof(float   ),       1, fp) ) return 0;  // float           
-  if(!fread_le(&dst->second_lift_speed              , sizeof(float   ),       1, fp) ) return 0;  // float           
-  if(!fread_le(&dst->bottom_second_retract_distance , sizeof(float   ),       1, fp) ) return 0;  // float           
-  if(!fread_le(&dst->bottom_second_retract_speed    , sizeof(float   ),       1, fp) ) return 0;  // float           
-  if(!fread_le(&dst->second_retract_distance        , sizeof(float   ),       1, fp) ) return 0;  // float           
-  if(!fread_le(&dst->second_retract_speed           , sizeof(float   ),       1, fp) ) return 0;  // float           
-  if(!fread_le(&dst->bottom_light_pwm               , sizeof(int16_t ),       1, fp) ) return 0;  // int16_t         
-  if(!fread_le(&dst->light_pwm                      , sizeof(int16_t ),       1, fp) ) return 0;  // int16_t         
-  if(!fread_le(&dst->advance_mode                   , sizeof(bool    ),       1, fp) ) return 0;  // bool            
-  if(!fread_le(&dst->printing_time                  , sizeof(int32_t ),       1, fp) ) return 0;  // int32_t         
-  if(!fread_le(&dst->total_volume                   , sizeof(float   ),       1, fp) ) return 0;  // float           
-  if(!fread_le(&dst->total_weight                   , sizeof(float   ),       1, fp) ) return 0;  // float           
-  if(!fread_le(&dst->total_price                    , sizeof(float   ),       1, fp) ) return 0;  // float           
-  if(!fread_le( dst->price_unit                     , sizeof(char    ),       8, fp) ) return 0;  // char [ 8]           
-  if(!fread_le(&dst->offset_of_layer_content        , sizeof(int32_t ),       1, fp) ) return 0;  // int32_t           
-  if(!fread_le(&dst->gray_scale_level               , sizeof(bool    ),       1, fp) ) return 0;  // bool              
-  if(!fread_le(&dst->transition_layer               , sizeof(int16_t ),       1, fp) ) return 0;  // int16_t    
+  if(!fread_be2le( dst->version                        , sizeof(char    ),       4, fp) ) return 0;  // char [ 4]
+  if(!fread_be2le(&dst->magic_tag                      , sizeof(uint64_t),       1, fp) ) return 0;  // uint64_t
+  if(!fread_be2le( dst->software_info                  , sizeof(char    ),      32, fp) ) return 0;  // char [32]
+  if(!fread_be2le( dst->software_version               , sizeof(char    ),      24, fp) ) return 0;  // char [24]
+  if(!fread_be2le( dst->file_time                      , sizeof(char    ),      24, fp) ) return 0;  // char [24]
+  if(!fread_be2le( dst->printer_name                   , sizeof(char    ),      32, fp) ) return 0;  // char [32]
+  if(!fread_be2le( dst->printer_type                   , sizeof(char    ),      32, fp) ) return 0;  // char [32]
+  if(!fread_be2le( dst->profile_name                   , sizeof(char    ),      32, fp) ) return 0;  // char [32]
+  if(!fread_be2le(&dst->anti_aliasing_level            , sizeof(int16_t ),       1, fp) ) return 0;  // int16_t        
+  if(!fread_be2le(&dst->grey_level                     , sizeof(int16_t ),       1, fp) ) return 0;  // int16_t        
+  if(!fread_be2le(&dst->blur_level                     , sizeof(int16_t ),       1, fp) ) return 0;  // int16_t        
+  if(!fread_be2le( dst->small_preview_image_data       , sizeof(uint16_t), 116*116, fp) ) return 0;  // uint16_t [116*116]
+  if(!fread_be2le(&dst->delimiter1                     , sizeof(uint16_t),       1, fp) ) return 0;  // int16_t
+  if(!fread_be2le( dst->big_preview_image_data         , sizeof(uint16_t), 290*290, fp) ) return 0;  // uint16_t [290*290]
+  if(!fread_be2le(&dst->delimiter2                     , sizeof(uint16_t),       1, fp) ) return 0;  // int16_t
+  if(!fread_be2le(&dst->total_layers                   , sizeof(int32_t ),       1, fp) ) return 0;  // int32_t         
+  if(!fread_be2le(&dst->x_resolution                   , sizeof(int16_t ),       1, fp) ) return 0;  // int16_t         
+  if(!fread_be2le(&dst->y_resolution                   , sizeof(int16_t ),       1, fp) ) return 0;  // int16_t         
+  if(!fread_be2le(&dst->x_mirror                       , sizeof(bool    ),       1, fp) ) return 0;  // bool            
+  if(!fread_be2le(&dst->y_mirror                       , sizeof(bool    ),       1, fp) ) return 0;  // bool            
+  if(!fread_be2le(&dst->x_size_of_platform             , sizeof(float   ),       1, fp) ) return 0;  // float           
+  if(!fread_be2le(&dst->y_size_of_platform             , sizeof(float   ),       1, fp) ) return 0;  // float           
+  if(!fread_be2le(&dst->z_size_of_platform             , sizeof(float   ),       1, fp) ) return 0;  // float           
+  if(!fread_be2le(&dst->layer_thickness                , sizeof(float   ),       1, fp) ) return 0;  // float           
+  if(!fread_be2le(&dst->common_exposure_time           , sizeof(float   ),       1, fp) ) return 0;  // float           
+  if(!fread_be2le(&dst->exposure_delay_mode            , sizeof(bool    ),       1, fp) ) return 0;  // bool            
+  if(!fread_be2le(&dst->turn_off_time                  , sizeof(float   ),       1, fp) ) return 0;  // float           
+  if(!fread_be2le(&dst->bottom_before_lift_time        , sizeof(float   ),       1, fp) ) return 0;  // float           
+  if(!fread_be2le(&dst->bottom_after_lift_time         , sizeof(float   ),       1, fp) ) return 0;  // float           
+  if(!fread_be2le(&dst->bottom_after_retract_time      , sizeof(float   ),       1, fp) ) return 0;  // float           
+  if(!fread_be2le(&dst->before_lift_time               , sizeof(float   ),       1, fp) ) return 0;  // float           
+  if(!fread_be2le(&dst->after_lift_time                , sizeof(float   ),       1, fp) ) return 0;  // float           
+  if(!fread_be2le(&dst->after_retract_time             , sizeof(float   ),       1, fp) ) return 0;  // float           
+  if(!fread_be2le(&dst->bottom_exposure_time           , sizeof(float   ),       1, fp) ) return 0;  // float           
+  if(!fread_be2le(&dst->bottom_layers                  , sizeof(float   ),       1, fp) ) return 0;  // float           
+  if(!fread_be2le(&dst->bottom_lift_distance           , sizeof(float   ),       1, fp) ) return 0;  // float           
+  if(!fread_be2le(&dst->bottom_lift_speed              , sizeof(float   ),       1, fp) ) return 0;  // float           
+  if(!fread_be2le(&dst->lift_distance                  , sizeof(float   ),       1, fp) ) return 0;  // float           
+  if(!fread_be2le(&dst->lift_speed                     , sizeof(float   ),       1, fp) ) return 0;  // float           
+  if(!fread_be2le(&dst->bottom_retract_distance        , sizeof(float   ),       1, fp) ) return 0;  // float           
+  if(!fread_be2le(&dst->bottom_retract_speed           , sizeof(float   ),       1, fp) ) return 0;  // float           
+  if(!fread_be2le(&dst->retract_distance               , sizeof(float   ),       1, fp) ) return 0;  // float           
+  if(!fread_be2le(&dst->retract_speed                  , sizeof(float   ),       1, fp) ) return 0;  // float           
+  if(!fread_be2le(&dst->bottom_second_lift_distance    , sizeof(float   ),       1, fp) ) return 0;  // float           
+  if(!fread_be2le(&dst->bottom_second_lift_speed       , sizeof(float   ),       1, fp) ) return 0;  // float           
+  if(!fread_be2le(&dst->second_lift_distance           , sizeof(float   ),       1, fp) ) return 0;  // float           
+  if(!fread_be2le(&dst->second_lift_speed              , sizeof(float   ),       1, fp) ) return 0;  // float           
+  if(!fread_be2le(&dst->bottom_second_retract_distance , sizeof(float   ),       1, fp) ) return 0;  // float           
+  if(!fread_be2le(&dst->bottom_second_retract_speed    , sizeof(float   ),       1, fp) ) return 0;  // float           
+  if(!fread_be2le(&dst->second_retract_distance        , sizeof(float   ),       1, fp) ) return 0;  // float           
+  if(!fread_be2le(&dst->second_retract_speed           , sizeof(float   ),       1, fp) ) return 0;  // float           
+  if(!fread_be2le(&dst->bottom_light_pwm               , sizeof(int16_t ),       1, fp) ) return 0;  // int16_t         
+  if(!fread_be2le(&dst->light_pwm                      , sizeof(int16_t ),       1, fp) ) return 0;  // int16_t         
+  if(!fread_be2le(&dst->advance_mode                   , sizeof(bool    ),       1, fp) ) return 0;  // bool            
+  if(!fread_be2le(&dst->printing_time                  , sizeof(int32_t ),       1, fp) ) return 0;  // int32_t         
+  if(!fread_be2le(&dst->total_volume                   , sizeof(float   ),       1, fp) ) return 0;  // float           
+  if(!fread_be2le(&dst->total_weight                   , sizeof(float   ),       1, fp) ) return 0;  // float           
+  if(!fread_be2le(&dst->total_price                    , sizeof(float   ),       1, fp) ) return 0;  // float           
+  if(!fread_be2le( dst->price_unit                     , sizeof(char    ),       8, fp) ) return 0;  // char [ 8]           
+  if(!fread_be2le(&dst->offset_of_layer_content        , sizeof(int32_t ),       1, fp) ) return 0;  // int32_t           
+  if(!fread_be2le(&dst->gray_scale_level               , sizeof(bool    ),       1, fp) ) return 0;  // bool              
+  if(!fread_be2le(&dst->transition_layer               , sizeof(int16_t ),       1, fp) ) return 0;  // int16_t    
   return 1;
 }           
 
 
 int fread_goo_layer_definition(goo_layer_definition_t *dst, FILE *fp){
   // fpos_t pos; getpos(fp, &pos);
-  if(!fread_le(&dst->pause_flag               , sizeof(int16_t ), 1, fp) ) return 0;  // int16_t 
-  if(!fread_le(&dst->pause_position_z         , sizeof(float   ), 1, fp) ) return 0;  // float   
-  if(!fread_le(&dst->layer_position_z         , sizeof(float   ), 1, fp) ) return 0;  // float   
-  if(!fread_le(&dst->layer_exposure_time      , sizeof(float   ), 1, fp) ) return 0;  // float   
-  if(!fread_le(&dst->layer_off_time           , sizeof(float   ), 1, fp) ) return 0;  // float   
-  if(!fread_le(&dst->before_lift_time         , sizeof(float   ), 1, fp) ) return 0;  // float   
-  if(!fread_le(&dst->after_lift_time          , sizeof(float   ), 1, fp) ) return 0;  // float   
-  if(!fread_le(&dst->after_retract_time       , sizeof(float   ), 1, fp) ) return 0;  // float   
-  if(!fread_le(&dst->lift_distance            , sizeof(float   ), 1, fp) ) return 0;  // float   
-  if(!fread_le(&dst->lift_speed               , sizeof(float   ), 1, fp) ) return 0;  // float   
-  if(!fread_le(&dst->second_lift_distance     , sizeof(float   ), 1, fp) ) return 0;  // float   
-  if(!fread_le(&dst->second_lift_speed        , sizeof(float   ), 1, fp) ) return 0;  // float   
-  if(!fread_le(&dst->retract_distance         , sizeof(float   ), 1, fp) ) return 0;  // float   
-  if(!fread_le(&dst->retract_speed            , sizeof(float   ), 1, fp) ) return 0;  // float   
-  if(!fread_le(&dst->second_retract_distance  , sizeof(float   ), 1, fp) ) return 0;  // float   
-  if(!fread_le(&dst->second_retract_speed     , sizeof(float   ), 1, fp) ) return 0;  // float   
-  if(!fread_le(&dst->light_pwm                , sizeof(int16_t ), 1, fp) ) return 0;  // int16_t 
-  if(!fread_le(&dst->delimiter                , sizeof(uint16_t), 1, fp) ) return 0;  // uint16_t
+  if(!fread_be2le(&dst->pause_flag               , sizeof(int16_t ), 1, fp) ) return 0;  // int16_t 
+  if(!fread_be2le(&dst->pause_position_z         , sizeof(float   ), 1, fp) ) return 0;  // float   
+  if(!fread_be2le(&dst->layer_position_z         , sizeof(float   ), 1, fp) ) return 0;  // float   
+  if(!fread_be2le(&dst->layer_exposure_time      , sizeof(float   ), 1, fp) ) return 0;  // float   
+  if(!fread_be2le(&dst->layer_off_time           , sizeof(float   ), 1, fp) ) return 0;  // float   
+  if(!fread_be2le(&dst->before_lift_time         , sizeof(float   ), 1, fp) ) return 0;  // float   
+  if(!fread_be2le(&dst->after_lift_time          , sizeof(float   ), 1, fp) ) return 0;  // float   
+  if(!fread_be2le(&dst->after_retract_time       , sizeof(float   ), 1, fp) ) return 0;  // float   
+  if(!fread_be2le(&dst->lift_distance            , sizeof(float   ), 1, fp) ) return 0;  // float   
+  if(!fread_be2le(&dst->lift_speed               , sizeof(float   ), 1, fp) ) return 0;  // float   
+  if(!fread_be2le(&dst->second_lift_distance     , sizeof(float   ), 1, fp) ) return 0;  // float   
+  if(!fread_be2le(&dst->second_lift_speed        , sizeof(float   ), 1, fp) ) return 0;  // float   
+  if(!fread_be2le(&dst->retract_distance         , sizeof(float   ), 1, fp) ) return 0;  // float   
+  if(!fread_be2le(&dst->retract_speed            , sizeof(float   ), 1, fp) ) return 0;  // float   
+  if(!fread_be2le(&dst->second_retract_distance  , sizeof(float   ), 1, fp) ) return 0;  // float   
+  if(!fread_be2le(&dst->second_retract_speed     , sizeof(float   ), 1, fp) ) return 0;  // float   
+  if(!fread_be2le(&dst->light_pwm                , sizeof(int16_t ), 1, fp) ) return 0;  // int16_t 
+  if(!fread_be2le(&dst->delimiter                , sizeof(uint16_t), 1, fp) ) return 0;  // uint16_t
 }
 
 
@@ -146,15 +146,15 @@ int  fread_goo_layer_content(goo_layer_content_t **dst, goo_header_info_t *heade
   for(int i=0; i < header->total_layers; i++){
     // Reading layer definition
     if(!fread_goo_layer_definition(&(*dst)[i].definition, fp) )                         return 0;
-    if(!fread_le(&(*dst)[i].data_size  , sizeof(int32_t ), 1, fp) )                     return 0;
-    if(!fread_le(&(*dst)[i].data_start , sizeof(uint8_t ), 1, fp) )                     return 0;
+    if(!fread_be2le(&(*dst)[i].data_size  , sizeof(int32_t ), 1, fp) )                     return 0;
+    if(!fread_be2le(&(*dst)[i].data_start , sizeof(uint8_t ), 1, fp) )                     return 0;
 
     // Reading image data
     // Subtract 1 from size because the size includes the magic number 0x55 before image_data
     (*dst)[i].image_data = (image_data_chunk_t*)malloc(((*dst)[i].data_size-1)*sizeof(image_data_chunk_t));
     if( (*dst)[i].image_data == NULL)                                                   return 0;
-    if(!fread_le( (*dst)[i].image_data , sizeof(uint8_t ), ((*dst)[i].data_size-1), fp))return 0;
-    if(!fread_le(&(*dst)[i].delimiter  , sizeof(uint16_t), 1, fp) )                     return 0;
+    if(!fread_be2le( (*dst)[i].image_data , sizeof(uint8_t ), ((*dst)[i].data_size-1), fp))return 0;
+    if(!fread_be2le(&(*dst)[i].delimiter  , sizeof(uint16_t), 1, fp) )                     return 0;
   }
 
   return 1;
@@ -163,7 +163,7 @@ int  fread_goo_layer_content(goo_layer_content_t **dst, goo_header_info_t *heade
 int fread_goo_file(goo_t *dst, FILE *fp){
   if(!fread_goo_header_info(&(*dst).header_info, fp) )                                  return 0;
   if(!fread_goo_layer_content(&(*dst).layer_content, &(*dst).header_info, fp) )         return 0;
-  if(!fread_le( (*dst).ending_string, sizeof(char), 11, fp) )                           return 0;
+  if(!fread_be2le( (*dst).ending_string, sizeof(char), 11, fp) )                           return 0;
 }
 
 
