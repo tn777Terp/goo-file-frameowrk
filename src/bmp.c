@@ -77,6 +77,92 @@ int fread_bmp_file(bmp_t *bmp, FILE *fp){
 }
 
 
+int  fwrite_bmp_header(bmp_header_t *src, FILE *fp){
+  if(fseek(fp, 0, SEEK_SET)) return 0;
+  if(!fwrite(&src->id            ,  sizeof(uint16_t),  1,  fp) )  return 0;
+  if(!fwrite(&src->size          ,  sizeof(uint32_t),  1,  fp) )  return 0;
+  if(!fwrite(&src->reserved      ,  sizeof(uint32_t),  1,  fp) )  return 0;
+  if(!fwrite(&src->offset        ,  sizeof(uint32_t),  1,  fp) )  return 0;
+  if(!fwrite(&src->headersize    ,  sizeof(uint32_t),  1,  fp) )  return 0;
+  if(!fwrite(&src->width         ,  sizeof(uint32_t),  1,  fp) )  return 0;
+  if(!fwrite(&src->height        ,  sizeof(uint32_t),  1,  fp) )  return 0;
+  if(!fwrite(&src->colorplane    ,  sizeof(uint16_t),  1,  fp) )  return 0;
+  if(!fwrite(&src->bitperpixel   ,  sizeof(uint16_t),  1,  fp) )  return 0;
+  if(!fwrite(&src->compression   ,  sizeof(uint32_t),  1,  fp) )  return 0;
+  if(!fwrite(&src->pixelsize     ,  sizeof(uint32_t),  1,  fp) )  return 0;
+  if(!fwrite(&src->pixelmeter_x  ,  sizeof(uint32_t),  1,  fp) )  return 0;
+  if(!fwrite(&src->pixelmeter_y  ,  sizeof(uint32_t),  1,  fp) )  return 0;
+  if(!fwrite(&src->colorused     ,  sizeof(uint32_t),  1,  fp) )  return 0;
+  if(!fwrite(&src->importantcolor,  sizeof(uint32_t),  1,  fp) )  return 0;
+  return 1;
+}
+
+
+/// @brief Writes color table. Only support 8-bit grayscale for now
+/// @param header Pointer to bmp header
+/// @param fp Pointer to file stream
+/// @return Write: 1 = Success | 0 = Fail
+int fwrite_bmp_colortable(bmp_header_t *header, FILE *fp){
+  uint32_t pixel_nbyte = header->bitperpixel / 8;   // Convert size from bits to bytes
+  // int padding = bmp_get_row_padding(pixel_nbyte, header->width);
+
+  if(header->bitperpixel > 8 ) return 1;  // Only pixel-size 8-bit of less requires lookup table
+
+  // Only support 8-bit grayscale for now.
+  // LUT value is gray gradient. Can be modified for other colors
+  switch(header->bitperpixel){
+    // Write 00,00,00,00...to... 000,255,255,255 (for little-eendian system)
+    case 8:
+      for(uint32_t i=0; i<256; i++){
+        // uint32_t lut_value = (i<<24) | (i<<16) | (i<<8) & 0xFFFFFF00;
+        uint32_t lut_value = (0x00) | (i<<16) | (i<<8) | (i);
+        if(!fwrite(&lut_value, 4, 1, fp))  return 0;
+      } return 1;
+    default:
+      (void)PRINT_WARNING("Only supports 8-bits grayscale colortable for now.\n");
+      return 0;
+  }
+  return 1;
+}
+
+int fwrite_bmp_pixel(bmp_pixel_t **src, bmp_header_t *header, FILE *fp){
+  uint32_t pixel_nbyte = header->bitperpixel / 8;   // Convert size from bits to bytes
+  int      padding = bmp_get_row_padding(pixel_nbyte, header->width);
+
+  for(uint32_t y=0; y < header->height && y < BMP_MAX_PIXELY; y++){
+    for(uint32_t x=0; x < header->width && x < BMP_MAX_PIXELX; x++){
+      size_t pixel_offset = (x + y*header->width)*pixel_nbyte;
+      if(!fwrite( ((uint8_t*)(*src) + pixel_offset), pixel_nbyte, 1, fp) ) 
+      return 0; 
+    }
+    (void)fwrite((uint8_t[]){0,0,0}, padding, 1, fp); 
+  }
+  return 1;
+}
+
+
+int fwrite_bmp_file(bmp_t *bmp, FILE *fp){
+  static const size_t BMP_HEADER_OFFSET    = 54;
+  static const size_t COLORTABLE_OFFSET_U8 = 256*4;
+
+  // Calculate pixel offsets if grayscale
+  if((*bmp).header.bitperpixel == 24){
+    (*bmp).header.offset = BMP_HEADER_OFFSET;
+  } else if((*bmp).header.bitperpixel == 8){
+    (*bmp).header.offset = BMP_HEADER_OFFSET + COLORTABLE_OFFSET_U8;
+  } else {
+    (void)PRINT_WARNING("Only supports 24-bit and 8-bits bit-per-pixel for now.\n");
+    return 0;
+  }
+
+  if(!fwrite_bmp_header(&(*bmp).header, fp)              )  return 0;     
+  if(!fwrite_bmp_colortable(&(*bmp).header, fp)          )  return 0;     
+  if(!fwrite_bmp_pixel(&(*bmp).pixel, &(*bmp).header, fp))  return 0;   
+  return 1;
+}
+
+
+
 /// @brief Get the number of padding required for each row in bytes.
 ///        Rows must be divisible by 4 bytes rounded up.
 /// @param bytesperpixel Size of each pixels in bytes
@@ -148,4 +234,5 @@ void print_bmp(bmp_t *bmp){
   print_bmp_header(&(*bmp).header);
   print_bmp_pixel(&(*bmp).header, (*bmp).pixel);
 }
+
 

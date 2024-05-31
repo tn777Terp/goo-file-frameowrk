@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "bmp_config.h"
+
 #define BYTE_OFFSET_RED 0
 #define BYTE_OFFSET_GRN 1
 #define BYTE_OFFSET_BLU 2
@@ -52,6 +54,10 @@ void free_bmp(bmp_t *bmp);
 int  fread_bmp_header(bmp_header_t *dst, FILE *fp);
 int  fread_bmp_pixel(bmp_pixel_t **dst, bmp_header_t *header, FILE *fp);
 int  fread_bmp_file(bmp_t *bmp, FILE *fp);
+
+int  fwrite_bmp_header(bmp_header_t *src, FILE *fp);
+int  fwrite_bmp_pixel(bmp_pixel_t **src, bmp_header_t *header, FILE *fp);
+int  fwrite_bmp_file(bmp_t *bmp, FILE *fp);
 
 int  bmp_get_row_padding(int pixelsize, uint32_t width);
 

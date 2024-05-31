@@ -33,15 +33,25 @@ int main(int argc, char ** argv){
   }
 
 
-/*** EXAMPLE of how to read entire bmp file ***/
-  // bmp_t bmp; init_bmp(&bmp);
-  // if(!fread_bmp_file(&bmp, p_fin) ){
-  //   (void)PRINT_ERR("Failed to read header info for %s\n\n", argv[1]);
-  //   return EIO;
-  // }
-  // print_bmp(&bmp);
-  // free_bmp(&bmp);
 
+
+/*** EXAMPLE of how to read entire bmp file and rewrite the content***/
+  bmp_t bmp; init_bmp(&bmp);
+  if(!fread_bmp_file(&bmp, p_fin) ){
+    (void)PRINT_ERR("Failed to read bmp file: %s\n\n", argv[1]);
+    return EIO;
+  }
+  print_bmp(&bmp);
+  //free_bmp(&bmp);
+
+  FILE *p_fout = fopen("test_out.bmp", "wb");
+  if(!fwrite_bmp_file(&bmp, p_fout)){
+    (void)PRINT_ERR("Failed to write bmp file: %s\n\n", "test_out.bmp");
+    return EIO;
+  }
+  fclose(p_fout);
+
+  free_bmp(&bmp);
 
 /*** EXAMPLE of how to read the header and pixel data separately ***/
   // bmp_header_t bmp_header;
