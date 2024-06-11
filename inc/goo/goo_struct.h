@@ -12,19 +12,8 @@
 // ├─ goo_layer_content_t[*]
 // │  ├─ goo_layer_definition_t
 // │  ├─ ...
-// │  ├─ image_data_chunk_t[*]
-// │  ├─ ...
-//
 
-// Chunk of image data. See spec sheet PDF for formatting info
-#pragma packed
-typedef struct image_data_chunk_t{
-  uint8_t byte0;
-  uint8_t byte1;
-  uint8_t byte2;
-  uint8_t byte3;
-  uint8_t byte4;
-} image_data_chunk_t;
+
 
 // Data are stored as little endian. You must convert them back to big endian when
 // writing out file.
@@ -122,7 +111,8 @@ typedef struct goo_layer_content_t {
   goo_layer_definition_t definition ;  // Layer definitions
   int32_t                data_size  ;  // Indicate size of image_data
   uint8_t                data_start ;  // Fix value: 0x55 - indicates start of image_data
-  image_data_chunk_t    *image_data ;  // See spec sheet pdf for details on the formatting
+  uint8_t               *image_data ;  // See spec sheet pdf for details on the formatting
+  uint8_t                checksum   ;  // 8-bit checksum of image_data
   uint16_t               delimiter  ;  // Fix value: 0x0D_0A
 } goo_layer_content_t;              
 

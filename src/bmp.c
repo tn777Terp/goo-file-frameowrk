@@ -5,8 +5,22 @@
 #include "endian.h"
 #include "commons.h" // for error printing
 
-void init_bmp(bmp_t *bmp){
+void init_bmp(bmp_t *bmp, uint32_t width, uint32_t height){
   memset(bmp, 0, sizeof(bmp_t));
+  (*bmp).header.id          = *(uint16_t*)"BM";
+  (*bmp).header.offset      = (uint32_t)BMP_HEADER_OFFSET;
+  (*bmp).header.headersize  = (uint32_t)40;
+  (*bmp).header.width       = (uint32_t)width ;     
+  (*bmp).header.height      = (uint32_t)height;    
+  (*bmp).header.bitperpixel = (uint16_t)24;
+  (*bmp).header.colorplane  = (uint16_t) 1;
+}
+
+void init_bmp_grayscale(bmp_t *bmp, uint32_t width, uint32_t height){
+  init_bmp(bmp, width, height);
+  (*bmp).header.offset         = BMP_HEADER_OFFSET + COLORTABLE_OFFSET_U8; 
+  (*bmp).header.bitperpixel    = (uint16_t)  8;
+  (*bmp).header.importantcolor = (uint32_t)256;
 }
 
 
@@ -142,9 +156,6 @@ int fwrite_bmp_pixel(bmp_pixel_t **src, bmp_header_t *header, FILE *fp){
 
 
 int fwrite_bmp_file(bmp_t *bmp, FILE *fp){
-  static const size_t BMP_HEADER_OFFSET    = 54;
-  static const size_t COLORTABLE_OFFSET_U8 = 256*4;
-
   // Calculate pixel offsets if grayscale
   if((*bmp).header.bitperpixel == 24){
     (*bmp).header.offset = BMP_HEADER_OFFSET;

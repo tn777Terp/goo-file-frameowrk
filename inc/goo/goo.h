@@ -19,6 +19,7 @@ int   fread_goo_layer_definition(goo_layer_definition_t *dst, FILE *fp);  // Rea
 int   fread_goo_layer_content(goo_layer_content_t **dst, goo_header_info_t *header, FILE *fp);
 int   fread_goo_file(goo_t *dst, FILE *fp);                               // Read all content of .goo file
 
+
 void  print_img_u16(uint16_t *data, uint16_t width, uint16_t height);     // Prints image given u16 pixel datas
 
 void  print_goo_header_info(goo_header_info_t *header);                   // Prints out all .goo header info
@@ -27,11 +28,7 @@ void  print_goo_layer_content(goo_layer_content_t *content);              // Pri
 void  print_goo(goo_t *goo, int max_layer);                               // Print all .goo info
 
 
-
-
-
-
-
+uint8_t*  decode_goo_image_data(const goo_t *src);
 
 
 

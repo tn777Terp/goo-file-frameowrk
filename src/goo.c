@@ -141,30 +141,164 @@ int  fread_goo_layer_content(goo_layer_content_t **dst, goo_header_info_t *heade
 
   *dst = (goo_layer_content_t*)calloc(header->total_layers, sizeof(goo_layer_content_t));
   if(*dst == NULL) return 0;
+  
 
   // Loop through all layers and read their layer info
   for(int i=0; i < header->total_layers; i++){
     // Reading layer definition
-    if(!fread_goo_layer_definition(&(*dst)[i].definition, fp) )                         return 0;
+    if(!fread_goo_layer_definition(&(*dst)[i].definition, fp) )                            return 0;
     if(!fread_be2le(&(*dst)[i].data_size  , sizeof(int32_t ), 1, fp) )                     return 0;
-    if(!fread_be2le(&(*dst)[i].data_start , sizeof(uint8_t ), 1, fp) )                     return 0;
+
+    // Verifying start-byte. First byte before image data should always be 0x55
+    if(!fread_be2le(&(*dst)[i].data_start , sizeof(uint8_t), 1, fp) )                      return 0;
+    if((*dst)[i].data_start != 0x55) return 0; 
 
     // Reading image data
-    // Subtract 1 from size because the size includes the magic number 0x55 before image_data
-    (*dst)[i].image_data = (image_data_chunk_t*)malloc(((*dst)[i].data_size-1)*sizeof(image_data_chunk_t));
-    if( (*dst)[i].image_data == NULL)                                                   return 0;
-    if(!fread_be2le( (*dst)[i].image_data , sizeof(uint8_t ), ((*dst)[i].data_size-1), fp))return 0;
+    // Subtract 2*uint8 from size to account for the magic number 0x55 we just read and 8-bit checksum at the end
+    size_t layer_size = (*dst)[i].data_size - (2*sizeof(uint8_t));
+    (*dst)[i].image_data = (uint8_t*)malloc(layer_size*sizeof(uint8_t));
+    if( (*dst)[i].image_data == NULL)                                                      return 0;
+    if(!fread_be2le( (*dst)[i].image_data , sizeof(uint8_t ), layer_size, fp))             return 0;
+    if(!fread_be2le(&(*dst)[i].checksum   , sizeof(uint8_t),  1, fp) )                     return 0;
     if(!fread_be2le(&(*dst)[i].delimiter  , sizeof(uint16_t), 1, fp) )                     return 0;
+
+    // Calculating and verifying checksum
+    uint8_t *tmp_image_data = (*dst)[i].image_data;
+    uint8_t tmp_checksum = 0; 
+    for(int i=0; i<layer_size; i++){
+      tmp_checksum += ((uint8_t*)tmp_image_data)[i];
+    } tmp_checksum = ~tmp_checksum;
+    if(tmp_checksum != (*dst)[i].checksum)                                                 return 0;
   }
 
   return 1;
 }
 
 int fread_goo_file(goo_t *dst, FILE *fp){
-  if(!fread_goo_header_info(&(*dst).header_info, fp) )                                  return 0;
-  if(!fread_goo_layer_content(&(*dst).layer_content, &(*dst).header_info, fp) )         return 0;
+  if(!fread_goo_header_info(&(*dst).header_info, fp) )                                     return 0;
+  if(!fread_goo_layer_content(&(*dst).layer_content, &(*dst).header_info, fp) )            return 0;
   if(!fread_be2le( (*dst).ending_string, sizeof(char), 11, fp) )                           return 0;
 }
+
+
+
+// ###############################################################################################################################
+// IMAGE CODEC
+// ###############################################################################################################################
+
+#define OPCODE_ALLWHITE  0b00
+#define OPCODE_GRAYSCALE 0b01
+#define OPCODE_DIFFMODE  0b10
+#define OPCODE_ALLBLACK  0b11
+
+
+/// @brief Decode image data and convert it to bitmap pixels
+/// @param src Goo data with valid header and data info
+/// @return Pointer to 1D bitmap array
+uint8_t* decode_goo_image_data(const goo_t *src){
+  int32_t image_size    = (*src).header_info.x_resolution * (*src).header_info.y_resolution;
+  // subtract two bytes to account for data_start and checksum
+  int32_t data_size     = (*src).layer_content[0].data_size - 2;
+  uint8_t *encoded_data = (*src).layer_content[0].image_data;
+  
+
+  int pixel_pos = 0;  // points to current pixel being drawn
+  uint8_t *pixel_data;
+  if((pixel_data = (uint8_t*)malloc(image_size * sizeof(uint8_t))) == NULL) return NULL;
+  
+
+  // DECODING IMAGE_DATA
+  for(int i=0; i<data_size; i++){
+    // byte0[7:6] == opcode
+    //   b00 This chunk contain all 0x0 pixels
+    //   b01 This chunk contain the value of gray between 0x1 to 0xfe. The gray value is in the next byte
+    //   b10 This chunk contain the diff value from the previous pixel
+    //   b11 This chunk contain all 0xff pixels 
+    // byte0[5:4] == operand (operand functionality depends on the opcode)
+    //   operand = runlength for opcode = b00 | 01 | 11
+    //   operand = difftype  for opcode = b10
+ 
+    uint8_t  opcode    =  encoded_data[i] >> 6;
+    uint8_t  operand   = (encoded_data[i] >> 4) & 0b11;
+
+    uint8_t  color     = 0;
+    uint32_t runlength = 0;
+
+    int offset0 = i;
+    int offset1 = i + 1;
+    int offset2 = i + 2;
+    int offset3 = i + 3;
+    
+    if(opcode == OPCODE_DIFFMODE){
+      // byte0[5:4] == diffmode  for opcode = 10
+      //   b00 : Positive diff value byte0[3:0] to previous pixel. runlength = 1                    
+      //   b01 : Positive diff value byte0[3:0] to previous pixel. runlength = next byte          
+      //   b10 : Negative diff value byte0[3:0] to previous pixel. runlength = 1        
+      //   b11 : Negative diff value byte0[3:0] to previous pixel. runlength = next byte
+      uint8_t diff = encoded_data[i] & 0x0F;
+      switch(operand){
+        case 0b00: 
+          color = color + diff;
+          runlength = 1;
+          break;
+        case 0b01: 
+          color = color + diff;
+          runlength = encoded_data[++i];
+          break;
+        case 0b10: 
+          color = color - diff;
+          runlength = 1;
+          break;
+        case 0b11: 
+          color = color - diff;
+          runlength = encoded_data[++i];
+          break;
+        default: free(pixel_data); return NULL;
+      }
+    } 
+    
+    else{
+      // byte0[5:4] == runlength for opcode = 00 | 01 | 11
+      //   b00 : runlength = byte0[3:0]                     
+      //   b01 : runlength = [byte1 byte0[3:0]]             
+      //   b10 : runlength = [byte1 byte2 byte0[3:0]]       
+      //   b11 : runlength = [byte1 byte2 byte3 byte0[3:0]] 
+      switch(opcode){
+        case OPCODE_ALLWHITE:  color = 0;                     break; 
+        case OPCODE_GRAYSCALE: color = encoded_data[++i];     offset1++; offset2++; offset3++; break;        
+        case OPCODE_ALLBLACK:  color = 0xFF;                  break;
+        default: free(pixel_data); return NULL;
+      }
+      switch(operand){
+        case 0b00: 
+          runlength = encoded_data[offset0] & 0x0F;   
+          break;
+        case 0b01: 
+          runlength = (encoded_data[offset1]<< 4) | (encoded_data[offset0] & 0x0F);
+          i = i + 1;  
+          break;
+        case 0b10: 
+          runlength = (encoded_data[offset1]<<12) | (encoded_data[offset2]<< 4) | (encoded_data[offset0] & 0x0F);       
+          i = i + 2;
+          break;
+        case 0b11: 
+          runlength = (encoded_data[offset1]<<20) | (encoded_data[offset2]<<12) | (encoded_data[offset3]<<4) | (encoded_data[offset0] & 0x0F);     
+          i = i + 3;
+          break;
+        default: free(pixel_data); return NULL;
+      }
+
+      // Drawing out decoded pixel data
+      if(runlength <= 0) return NULL;
+      for(int j=0; j < runlength; j++){
+        pixel_data[pixel_pos+j] = color;
+      } pixel_pos = pixel_pos + runlength;
+    }
+  }
+
+  return pixel_data;
+}
+
 
 
 // ###############################################################################################################################
@@ -311,6 +445,7 @@ void print_goo_layer_content(goo_layer_content_t *content){
   printf("data_start              : ");   printf("0x%02hhX", content->data_start              );            putchar('\n');
   // printf("image_data              : ");   printf("%hi"  , content->image_data              );            putchar('\n');
   printf("image_data              : ");   printf("Too large to display!"                      );            putchar('\n');
+  printf("checksum                : ");   printf("0x%02hhX", content->checksum                );            putchar('\n');
   printf("delimiter               : ");   printf("0x%04hX" , content->delimiter               );            putchar('\n');
 }
 
