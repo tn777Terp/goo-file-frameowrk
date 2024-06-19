@@ -38,35 +38,37 @@ SOURCES_C   := $(notdir $(shell find $(SRC_DIR) -name "*.c"  ))
 SOURCES_CPP := $(notdir $(shell find $(SRC_DIR) -name "*.cpp"))
 SOURCES_H   := $(shell find $(INC_DIR) -name "*.h")
 
-OBJC       := $(addprefix $(OBJ_DIR)/, $(strip $(SOURCES_C:.c=.o)))
-OBJCPP     := $(addprefix $(OBJ_DIR)/, $(strip $(SOURCES_CPP:.c=.o)))
-OBJS_CORE  := $(addprefix $(OBJ_DIR)/, $(strip $(SOURCES_CPP:.cpp=.o) $(SOURCES_C:.c=.o)))
-OBJS_ALL    = $(shell find $(OBJ_DIR) -name "*.o"  )
+OBJC        := $(addprefix $(OBJ_DIR)/, $(strip $(SOURCES_C:.c=.o)))
+OBJCPP      := $(addprefix $(OBJ_DIR)/, $(strip $(SOURCES_CPP:.c=.o)))
+OBJS_CORE   := $(addprefix $(OBJ_DIR)/, $(strip $(SOURCES_CPP:.cpp=.o) $(SOURCES_C:.c=.o)))
+OBJS_ALL     = $(shell find $(OBJ_DIR) -name "*.o"  )
 
 # Third party stuff
-IMPORT_PARENT_DIR := imported
-IMPORT_LIBS_DIRS  := $(wildcard $(IMPORT_PARENT_DIR)/*)
-IMPORT_SRC_DIR 	  := $(addsuffix src, $(IMPORT_LIBS_DIRS)/)
-IMPORT_INC_DIR 	  := $(addsuffix inc, $(IMPORT_LIBS_DIRS)/)
-
-IMPORT_SOURCES_C  := $(notdir $(shell find $(IMPORT_SRC_DIR) -name "*.c"  ))
-IMPORT_OBJS				:= $(addprefix $(OBJ_DIR)/, $(strip $(IMPORT_SOURCES_C:.c=.o)))
+IMPORT_PARENT_DIR  := imported
+IMPORTED_LIBS_DIRS := $(wildcard $(IMPORT_PARENT_DIR)/*)
+IMPORT_SRC_DIR 	   := $(addsuffix /src, $(IMPORTED_LIBS_DIRS))
+IMPORT_INC_DIR 	   := $(addsuffix /inc, $(IMPORTED_LIBS_DIRS))
+ 
+IMPORT_SOURCES_C   := $(notdir $(shell find $(IMPORT_SRC_DIR) -name "*.c"  ))
+IMPORT_OBJS				 := $(addprefix $(OBJ_DIR)/, $(strip $(IMPORT_SOURCES_C:.c=.o)))
 
 # Compiler flags
 CFLAGS     := $(if $(DEBUG),-g -O0 , -O2)
 CFLAGS     += $(addprefix -I ,$(sort $(dir $(SOURCES_H))))
 CFLAGS     += $(addprefix -I ,$(sort $(IMPORT_INC_DIR)))
 CFLAGS     += -fgnu89-inline
-
 CXXFLAGS    = $(CFLAGS)
-LDFLAGS    := 
+
+LDFLAGS    := -lm
 LOADLIBES  += #-L/usr/include/mysql
 LDLIBS     += #-lpthread -lmysqlclient
 
 
 # Testing variable value
 print:
-	@echo $(OBJS_ALL)
+	@echo $(IMPORTED_LIBS_DIRS)
+	@echo $(IMPORT_SRC_DIR)
+	@echo $(IMPORT_INC_DIR)
 
 # Create output directories
 $(OBJ_DIR):
@@ -81,8 +83,8 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 
 
 # Compiling third party project
-.PHONY: $(IMPORT_LIBS_DIRS)
-$(IMPORT_LIBS_DIRS):
+.PHONY: $(IMPORTED_LIBS_DIRS)
+$(IMPORTED_LIBS_DIRS):
 	@printf "$(BPurple)Compiling $@ $(NOC)\n"
 	$(MAKE) all -C ./$@ OBJ_DIR=$(CWD)/$(OBJ_DIR)
 	@printf '\n'
@@ -90,10 +92,10 @@ $(IMPORT_LIBS_DIRS):
 # Linking object files into executable
 $(BIN_DIR)/$(PROG_NAME): $(OBJS_CORE)
 	@printf "$(BPurple)Compiling executable$(NOC)\n"
-	$(CC) $(OBJS_ALL) -o $@
+	$(CC) $(OBJS_ALL) -o $@ $(LDFLAGS)
 
 
-all: $(OBJ_DIR) $(IMPORT_LIBS_DIRS) $(BIN_DIR)/$(PROG_NAME)
+all: $(OBJ_DIR) $(IMPORTED_LIBS_DIRS) $(BIN_DIR)/$(PROG_NAME)
 	@printf "\n$(BGreen)Compilation Success!$(NOC)\n\n"
 
 clean: 
