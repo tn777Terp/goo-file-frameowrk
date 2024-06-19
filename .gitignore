@@ -1,6 +1,7 @@
 .vscode
-./Debug
+Debug/
 *.goo
 *.bmp
 *.jpg
+*.svg
 *.o

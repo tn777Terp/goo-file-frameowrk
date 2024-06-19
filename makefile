@@ -11,93 +11,91 @@ include fonts.mk
 help: 
 	@printf "\t$(BYellow)options: all, help, clean $(NOC)\n\n"
 
+CWD := $(PWD)
+
 # annotation when release version
 DEBUG       := y
-TARGET_PROG := main
+MAIN_NAME   := main
 PROG_NAME   := goo
 
 # project directory	
-DEBUG_DIR   := ./Debug
-RELEASE_DIR := ./Release
+DEBUG_DIR   := Debug
+RELEASE_DIR := Release
 BIN_DIR     := $(if $(DEBUG), $(DEBUG_DIR), $(RELEASE_DIR))
+OBJ_DIR 		:= $(strip $(BIN_DIR)/src)
+
+# Source directory
+SRC_DIR = src
+INC_DIR = inc
 
 # shell command
 CC    := gcc
 CXX   := g++
 RM    := rm -rf
-MKDIR := mkdir -p
-SED   := sed
-MV    := mv
 
-# init sources & objects & depends
-sources_all := $(shell find . -name "*.c" -o -name "*.cpp" -o -name "*.h")
-sources_c   := $(filter %.c, $(sources_all))
-sources_cpp := $(filter %.cpp, $(sources_all))
-sources_h   := $(filter %.h, $(sources_all))
-objs        := $(addprefix $(BIN_DIR)/,$(strip $(sources_cpp:.cpp=.o) $(sources_c:.c=.o)))
-deps        := $(addprefix $(BIN_DIR)/,$(strip $(sources_cpp:.cpp=.d) $(sources_c:.c=.d)))
+# Getting file names
+SOURCES_C   := $(notdir $(shell find $(SRC_DIR) -name "*.c"  ))
+SOURCES_CPP := $(notdir $(shell find $(SRC_DIR) -name "*.cpp"))
+SOURCES_H   := $(shell find $(INC_DIR) -name "*.h")
 
-# create directory
-$(foreach dirname,$(sort $(dir $(sources_c) $(sources_cpp))),\
-  $(shell $(MKDIR) $(BIN_DIR)/$(dirname)))
+OBJC       := $(addprefix $(OBJ_DIR)/, $(strip $(SOURCES_C:.c=.o)))
+OBJCPP     := $(addprefix $(OBJ_DIR)/, $(strip $(SOURCES_CPP:.c=.o)))
+OBJS_CORE  := $(addprefix $(OBJ_DIR)/, $(strip $(SOURCES_CPP:.cpp=.o) $(SOURCES_C:.c=.o)))
+OBJS_ALL    = $(shell find $(OBJ_DIR) -name "*.o"  )
 
-# complie & link variable
+# Third party stuff
+IMPORT_PARENT_DIR := imported
+IMPORT_LIBS_DIRS  := $(wildcard $(IMPORT_PARENT_DIR)/*)
+IMPORT_SRC_DIR 	  := $(addsuffix src, $(IMPORT_LIBS_DIRS)/)
+IMPORT_INC_DIR 	  := $(addsuffix inc, $(IMPORT_LIBS_DIRS)/)
+
+IMPORT_SOURCES_C  := $(notdir $(shell find $(IMPORT_SRC_DIR) -name "*.c"  ))
+IMPORT_OBJS				:= $(addprefix $(OBJ_DIR)/, $(strip $(IMPORT_SOURCES_C:.c=.o)))
+
+# Compiler flags
 CFLAGS     := $(if $(DEBUG),-g -O0 , -O2)
-CFLAGS     += $(addprefix -I ,$(sort $(dir $(sources_h))))
+CFLAGS     += $(addprefix -I ,$(sort $(dir $(SOURCES_H))))
+CFLAGS     += $(addprefix -I ,$(sort $(IMPORT_INC_DIR)))
 CFLAGS     += -fgnu89-inline
+
 CXXFLAGS    = $(CFLAGS)
 LDFLAGS    := 
 LOADLIBES  += #-L/usr/include/mysql
 LDLIBS     += #-lpthread -lmysqlclient
 
-# add vpath
-vpath %.h $(sort $(dir $(sources_h)))
-vpath %.c $(sort $(dir $(sources_c)))
-vpath %.cpp $(sort $(dir $(sources_cpp)))
 
-# generate depend files
-# actually generate after object generated, beacasue it only used when next make)
-ifneq "$(MAKECMDGOALS)" "clean"
-sinclude $(deps)
-endif
+# Testing variable value
+print:
+	@echo $(OBJS_ALL)
 
-# make-depend(depend-file,source-file,object-file,cc)
-define make-depend
-  $(RM) $1;                                     \
-  $4 $(CFLAGS) -MM $2 |                         \
-  $(SED) 's,\($(notdir $3)\): ,$3: ,' > $1.tmp; \
-  $(SED) -e 's/#.*//'                           \
-         -e 's/^[^:]*: *//'                     \
-         -e 's/ *\\$$//'                        \
-         -e '/^$$/ d'                           \
-         -e 's/$$/ :/' < $1.tmp >> $1.tmp;      \
-  $(MV) $1.tmp $1;
-endef
+# Create output directories
+$(OBJ_DIR):
+	mkdir -p $@
 
-# rules to generate objects file
-$(BIN_DIR)/%.o: %.c
-	@$(call make-depend,$(patsubst %.o,%.d,$@),$<,$@,$(CC))
-	$(CC) $(CFLAGS) -o $@ -c $<
+# Compiling object files
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BIN_DIR)/%.o: %.cpp
-	@$(call make-depend,$(patsubst %.o,%.d,$@),$<,$@,$(CXX))
-	$(CXX) $(CXXFLAGS) -o $@ -c $<
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-# add-target(target,objs,cc)
-define add-target
-  REAL_TARGET += $(BIN_DIR)/$1
-  $(BIN_DIR)/$1: $2
-	$3 $(LDFLAGS) $$^ $(LOADLIBES) $(LDLIBS) -o $$@
-endef
 
-# call add-target
-$(foreach targ,$(TARGET_PROG),$(eval $(call add-target,$(targ),$(objs),$(CXX))))
+# Compiling third party project
+.PHONY: $(IMPORT_LIBS_DIRS)
+$(IMPORT_LIBS_DIRS):
+	@printf "$(BPurple)Compiling $@ $(NOC)\n"
+	$(MAKE) all -C ./$@ OBJ_DIR=$(CWD)/$(OBJ_DIR)
+	@printf '\n'
 
-all: $(REAL_TARGET) $(TARGET_LIBS) $(BIN_DIR)/$(PROG_NAME)
+# Linking object files into executable
+$(BIN_DIR)/$(PROG_NAME): $(OBJS_CORE)
+	@printf "$(BPurple)Compiling executable$(NOC)\n"
+	$(CC) $(OBJS_ALL) -o $@
 
-# Rename main file
-$(BIN_DIR)/$(PROG_NAME): $(BIN_DIR)/$(TARGET_PROG)
-	mv $(BIN_DIR)/$(TARGET_PROG) $@
+
+all: $(OBJ_DIR) $(IMPORT_LIBS_DIRS) $(BIN_DIR)/$(PROG_NAME)
+	@printf "\n$(BGreen)Compilation Success!$(NOC)\n\n"
 
 clean: 
 	$(RM) $(BIN_DIR)
+	$(RM) *.o

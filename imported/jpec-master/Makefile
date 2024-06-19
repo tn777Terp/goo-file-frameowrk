@@ -1,35 +1,60 @@
-rm=rm -f
-CC=cc
-AR=ar cq
-RANLIB=ranlib
-LIBNAME=libjpec.a
-CLINAME=jpec
-# LIB_BUILD_MODE: release or debug
-LIB_BUILD_MODE=release
+####################################################################
+#  BOILER PLATE MAKEFILE FOR SRC/INC DIRECTORY FORMAT
+####################################################################
 
-INCLUDES= -Isrc -Iinclude
+.PHONY: all clean help
+help: 
+	@printf "\t$(BYellow)options: all, help, clean $(NOC)\n\n"
 
-DEFINES= $(INCLUDES)
-_release_cflags= -Os -DNDEBUG
-_debug_cflags= -g -O0
-CFLAGS= $(DEFINES) -std=c99 -Wall -Werror
-CFLAGS+= $(_$(LIB_BUILD_MODE)_cflags)
+# Parent directory will be passed in as an argument make is called
+CWD := $(PWD)
 
-SRCS = $(wildcard src/*.c)
-OBJS = $(patsubst %.c,%.o,$(SRCS))
+# Main prog name
+MAIN_NAME   := main
 
-%.c.o:
-	$(CC) $(CFLAGS) -c $*.c
+# project directory	
+OBJ_DIR 		?= obj
 
-all: $(CLINAME) $(LIBNAME)
+# Source directory
+SRC_DIR = src
+INC_DIR = inc
 
-$(LIBNAME): $(OBJS)
-	$(rm) $@
-	$(AR) $@ $(OBJS)
-	$(RANLIB) $@
+# shell command
+CC    := gcc
+CXX   := g++
+RM    := rm -rf
 
-$(CLINAME): $(LIBNAME) main.c
-	$(CC) -o $@ main.c -std=c99 `pkg-config --cflags --libs opencv` -Iinclude -L. -l$@
+# Getting file names
+sources_c   := $(notdir $(shell find $(SRC_DIR) -name "*.c"  ))
+sources_cpp := $(notdir $(shell find $(SRC_DIR) -name "*.cpp"))
+sources_h   := $(shell find $(INC_DIR) -name "*.h")
 
-clean:
-	$(rm) $(OBJS) $(CLINAME) $(LIBNAME)
+OBJS_ALL    := $(addprefix $(OBJ_DIR)/, $(strip $(sources_cpp:.cpp=.o) $(sources_c:.c=.o)))
+
+CFLAGS     := $(if $(DEBUG),-g -O0 , -O2)
+CFLAGS     += $(addprefix -I ,$(sort $(dir $(sources_h))))
+
+CXXFLAGS   = $(CFLAGS)
+
+.PHONY: all clean print
+all: $(OBJ_DIR) $(OBJS_ALL)
+
+clean: 
+	$(RM) $(OBJ_DIR)
+
+print:
+	@echo CWD = $(PWD)
+	@echo $(OBJ_DIR)
+
+# Create output directories
+$(OBJ_DIR):
+	@echo asdfasdf $(OBJ_DIR)
+	mkdir -p $@
+
+# Compiling object files
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+

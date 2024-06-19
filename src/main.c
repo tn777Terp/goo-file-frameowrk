@@ -10,6 +10,7 @@
 
 
 
+
 int main(int argc, char ** argv){
 
   if(argc != 2){
@@ -34,8 +35,7 @@ int main(int argc, char ** argv){
   }
 
 
-
-/*** EXAMPLE of how to read entire file and convert it to a bmp image***/
+/*** EXAMPLE of how to read entire file and convert it to an image file***/
   goo_t goo; init_goo(&goo);
   if(!fread_goo_file(&goo, p_fin) ){
     (void)PRINT_ERR("Failed to read header info for %s\n\n", argv[1]);
@@ -56,7 +56,6 @@ int main(int argc, char ** argv){
   //   return EIO;
   // } fclose(p_fout); free_bmp(&bmp);
 
-
   // Write JPEG Image
   int jpg_len  = 0;
   jpec_enc_t *jpg_encoded = jpec_enc_new(pixel_data, image_width, image_height);
@@ -71,7 +70,6 @@ int main(int argc, char ** argv){
   fclose(p_fout); jpec_enc_del(jpg_encoded);
 
   free_goo(&goo);
-
 
 
 /*** EXAMPLE of how to read entire bmp file and rewrite the content***/
